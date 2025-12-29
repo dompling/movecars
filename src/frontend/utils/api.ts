@@ -39,6 +39,7 @@ async function request<T>(
 export interface CreateOwnerData {
   name: string;
   carPlate?: string;
+  defaultReply?: string; // 默认回复语
   pushChannel: 'bark' | 'pushplus' | 'serverchan' | 'telegram';
   pushConfig: {
     bark?: { serverUrl: string; key: string };
@@ -62,6 +63,7 @@ export interface OwnerPublic {
 }
 
 export interface OwnerFull extends OwnerPublic {
+  defaultReply?: string; // 默认回复语
   pushChannel: string;
   pushConfig: CreateOwnerData['pushConfig'];
   createdAt: number;

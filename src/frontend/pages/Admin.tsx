@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
-import {Bell, Check, Copy, ExternalLink, QrCode, Settings, Trash2} from 'lucide-react';
-import {Button, Card, CardHeader, Input, Modal, Select, Toast} from '@/components/ui';
+import {Bell, Check, Copy, ExternalLink, MessageSquare, QrCode, Settings, Trash2} from 'lucide-react';
+import {Button, Card, CardHeader, Input, Modal, Select, TextArea, Toast} from '@/components/ui';
 import {useToast} from '@/hooks';
 import {type CreateOwnerData, ownerApi, type OwnerFull} from '@/utils/api';
 
@@ -31,6 +31,7 @@ export const Admin: React.FC = () => {
   // 表单状态
   const [name, setName] = useState('');
   const [carPlate, setCarPlate] = useState('');
+  const [defaultReply, setDefaultReply] = useState('');
   const [pushChannel, setPushChannel] = useState<PushChannel>('bark');
 
   // 推送配置
@@ -56,6 +57,7 @@ export const Admin: React.FC = () => {
         setOwner(data);
         setName(data.name);
         setCarPlate(data.carPlate || '');
+        setDefaultReply(data.defaultReply || '');
         setPushChannel(data.pushChannel as PushChannel);
 
         // 设置推送配置
@@ -117,6 +119,7 @@ export const Admin: React.FC = () => {
     const data: Partial<CreateOwnerData> = {
       name: name.trim(),
       carPlate: carPlate.trim() || undefined,
+      defaultReply: defaultReply.trim() || undefined,
       pushChannel,
       pushConfig: {},
     };
@@ -206,7 +209,7 @@ export const Admin: React.FC = () => {
               onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrcodeUrl)}`, '_blank')}
               icon={<ExternalLink size={18} />}
             >
-              生成二维码
+              二维码
             </Button>
           </div>
         </Card>
@@ -242,6 +245,42 @@ export const Admin: React.FC = () => {
               value={carPlate}
               onChange={(e) => setCarPlate(e.target.value)}
             />
+          </div>
+        </Card>
+
+        {/* Default Reply */}
+        <Card className="mb-6">
+          <CardHeader
+            title="默认回复语"
+            subtitle="收到挪车通知后的自动回复提示"
+            icon={<MessageSquare size={20} />}
+          />
+          <TextArea
+            placeholder="例如：收到，马上来挪车"
+            value={defaultReply}
+            onChange={(e) => setDefaultReply(e.target.value)}
+            rows={2}
+          />
+          {/* 快捷短语 */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[
+              '收到，马上来挪车',
+              '好的，稍等几分钟',
+              '正在赶来，请稍候',
+            ].map((phrase) => (
+              <button
+                key={phrase}
+                type="button"
+                onClick={() => setDefaultReply(phrase)}
+                className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+                  defaultReply === phrase
+                    ? 'bg-ios-blue text-white'
+                    : 'bg-ios-gray-6 text-gray-600 hover:bg-ios-gray-5'
+                }`}
+              >
+                {phrase}
+              </button>
+            ))}
           </div>
         </Card>
 

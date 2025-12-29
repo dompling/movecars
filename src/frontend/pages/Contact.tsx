@@ -132,8 +132,30 @@ export const Contact: React.FC = () => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
-            hint="告诉车主您的情况，如：挡住出口了"
+            hint="点击下方快捷短语或自定义输入"
           />
+          {/* 快捷短语 */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[
+              '请尽快挪车，谢谢！',
+              '你占着我的车位了',
+              '挡住出口了，急',
+              '堵住车库入口了',
+            ].map((phrase) => (
+              <button
+                key={phrase}
+                type="button"
+                onClick={() => setMessage(phrase)}
+                className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+                  message === phrase
+                    ? 'bg-ios-blue text-white'
+                    : 'bg-ios-gray-6 text-gray-600 hover:bg-ios-gray-5'
+                }`}
+              >
+                {phrase}
+              </button>
+            ))}
+          </div>
         </Card>
 
         {/* Info */}

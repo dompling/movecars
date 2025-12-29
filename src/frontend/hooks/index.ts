@@ -1,3 +1,2 @@
-export { useLocation, openInMaps } from './useLocation';
-export { usePolling } from './usePolling';
+export { useLocation, openInMaps, openAmap, openAppleMaps, getMapUrls } from './useLocation';
 export { useToast } from './useToast';

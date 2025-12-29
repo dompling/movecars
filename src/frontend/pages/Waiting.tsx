@@ -1,27 +1,34 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
-import { Button, Card, Toast } from '@/components/ui';
-import { usePolling, useToast, openInMaps } from '@/hooks';
+import { useRequest } from 'ahooks';
+import { Clock, MapPin, Check, Navigation, Loader2, Map } from 'lucide-react';
+import { Button, Card, Toast, Modal } from '@/components/ui';
+import { useToast, openAmap, openAppleMaps } from '@/hooks';
 import { requestApi, type RequestStatus } from '@/utils/api';
 
 export const Waiting: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toast, showToast } = useToast();
+  const [showMapModal, setShowMapModal] = useState(false);
 
-  const fetcher = useCallback(async () => {
-    if (!id) throw new Error('无效的请求');
-    const result = await requestApi.get(id);
-    if (!result.success) throw new Error(result.error);
-    return result.data!;
-  }, [id]);
-
-  const { data, loading } = usePolling<RequestStatus>({
-    fetcher,
-    interval: 3000,
-    enabled: !!id,
-    shouldStop: (data) => data.status === 'confirmed' || data.status === 'completed',
-  });
+  const { data, loading, cancel } = useRequest(
+    async () => {
+      if (!id) throw new Error('无效的请求');
+      const result = await requestApi.get(id);
+      if (!result.success) throw new Error(result.error);
+      return result.data!;
+    },
+    {
+      pollingInterval: 5000, // 5秒轮询一次
+      ready: !!id,
+      onSuccess: (data: RequestStatus) => {
+        // 状态为 confirmed 或 completed 时停止轮询
+        if (data.status === 'confirmed' || data.status === 'completed') {
+          cancel();
+        }
+      },
+    }
+  );
 
   const statusInfo = useMemo(() => {
     if (!data) return null;
@@ -60,9 +67,17 @@ export const Waiting: React.FC = () => {
     }
   }, [data]);
 
-  const handleOpenMap = () => {
+  const handleOpenAmap = () => {
     if (data?.ownerLocation) {
-      openInMaps(data.ownerLocation.lat, data.ownerLocation.lng);
+      openAmap(data.ownerLocation.lat, data.ownerLocation.lng);
+      setShowMapModal(false);
+    }
+  };
+
+  const handleOpenApple = () => {
+    if (data?.ownerLocation) {
+      openAppleMaps(data.ownerLocation.lat, data.ownerLocation.lng);
+      setShowMapModal(false);
     }
   };
 
@@ -152,7 +167,7 @@ export const Waiting: React.FC = () => {
             </div>
             <Button
               fullWidth
-              onClick={handleOpenMap}
+              onClick={() => setShowMapModal(true)}
               icon={<Navigation size={18} />}
             >
               在地图中查看
@@ -184,6 +199,32 @@ export const Waiting: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Map Selection Modal */}
+      <Modal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        title="选择地图"
+      >
+        <div className="space-y-3">
+          <Button
+            fullWidth
+            variant="secondary"
+            onClick={handleOpenAmap}
+            icon={<Map size={18} />}
+          >
+            高德地图
+          </Button>
+          <Button
+            fullWidth
+            variant="secondary"
+            onClick={handleOpenApple}
+            icon={<Navigation size={18} />}
+          >
+            Apple 地图
+          </Button>
+        </div>
+      </Modal>
 
       <Toast {...toast} />
     </div>

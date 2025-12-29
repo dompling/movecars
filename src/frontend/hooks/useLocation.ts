@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import type { Location } from '../utils/api';
+import type { Location, MapUrls } from '@/types';
+import { generateMapUrls } from '@/utils/coordinates';
 
 interface UseLocationResult {
   location: Location | null;
@@ -64,21 +65,37 @@ export function useLocation(): UseLocationResult {
 }
 
 /**
- * 打开系统地图导航
+ * 获取地图链接（使用 GCJ-02 坐标转换）
+ */
+export function getMapUrls(lat: number, lng: number): MapUrls {
+  return generateMapUrls(lat, lng);
+}
+
+/**
+ * 打开高德地图
+ */
+export function openAmap(lat: number, lng: number) {
+  const urls = generateMapUrls(lat, lng);
+  window.open(urls.amapUrl, '_blank');
+}
+
+/**
+ * 打开 Apple 地图
+ */
+export function openAppleMaps(lat: number, lng: number) {
+  const urls = generateMapUrls(lat, lng);
+  window.location.href = urls.appleUrl;
+}
+
+/**
+ * 智能打开地图（iOS 用 Apple Maps，其他用高德）
  */
 export function openInMaps(lat: number, lng: number) {
-  // 检测设备类型
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
 
   if (isIOS) {
-    // iOS 优先使用 Apple Maps
-    window.location.href = `maps://maps.apple.com/?ll=${lat},${lng}&q=位置`;
-  } else if (isAndroid) {
-    // Android 使用 Google Maps
-    window.location.href = `geo:${lat},${lng}?q=${lat},${lng}`;
+    openAppleMaps(lat, lng);
   } else {
-    // 其他设备打开网页版 Google Maps
-    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    openAmap(lat, lng);
   }
 }

@@ -6,6 +6,11 @@ on:
       - main
       - master
   workflow_dispatch:
+    inputs:
+      kv_namespace_id:
+        description: 'KV Namespace ID (可选，留空则自动创建)'
+        required: false
+        default: ''
 
 jobs:
   deploy:
@@ -24,11 +29,100 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build Frontend
         run: npm run build
+
+      - name: Setup Wrangler
+        run: npm install -g wrangler
+
+      - name: Get or Create KV Namespace
+        id: kv
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # 优先使用手动输入的 KV ID
+          if [ -n "${{ github.event.inputs.kv_namespace_id }}" ]; then
+            echo "kv_id=${{ github.event.inputs.kv_namespace_id }}" >> $GITHUB_OUTPUT
+            echo "✅ 使用手动输入的 KV ID: ${{ github.event.inputs.kv_namespace_id }}"
+            exit 0
+          fi
+
+          # 优先使用 secrets 中的 KV ID
+          if [ -n "${{ secrets.CLOUDFLARE_KV_ID }}" ]; then
+            echo "kv_id=${{ secrets.CLOUDFLARE_KV_ID }}" >> $GITHUB_OUTPUT
+            echo "✅ 使用 Secrets 中的 KV ID"
+            exit 0
+          fi
+
+          echo "🔍 查找现有 KV namespace..."
+
+          # 获取 KV 列表
+          KV_LIST=$(wrangler kv:namespace list 2>/dev/null || echo "[]")
+
+          # 查找 movecars 相关的 namespace
+          KV_ID=$(echo "$KV_LIST" | jq -r '.[] | select(.title | contains("movecars")) | .id' | head -1)
+
+          if [ -n "$KV_ID" ] && [ "$KV_ID" != "null" ]; then
+            echo "✅ 找到现有 KV namespace: $KV_ID"
+            echo "kv_id=$KV_ID" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📦 创建新的 KV namespace..."
+          CREATE_OUTPUT=$(wrangler kv:namespace create "MOVECARS_KV" 2>&1)
+          echo "$CREATE_OUTPUT"
+
+          KV_ID=$(echo "$CREATE_OUTPUT" | grep -oP 'id = "\K[^"]+' || echo "")
+
+          if [ -z "$KV_ID" ]; then
+            echo "❌ 创建 KV namespace 失败"
+            exit 1
+          fi
+
+          echo "✅ 创建成功: $KV_ID"
+          echo "kv_id=$KV_ID" >> $GITHUB_OUTPUT
+          echo ""
+          echo "💡 建议将此 ID 添加到 Repository Secrets:"
+          echo "   名称: CLOUDFLARE_KV_ID"
+          echo "   值: $KV_ID"
+
+      - name: Generate wrangler.toml
+        run: |
+          cat > wrangler.toml << 'EOF'
+          name = "movecars"
+          main = "src/worker/index.ts"
+          compatibility_date = "2024-12-18"
+          compatibility_flags = ["nodejs_compat"]
+
+          [[kv_namespaces]]
+          binding = "MOVECARS_KV"
+          id = "${{ steps.kv.outputs.kv_id }}"
+
+          [assets]
+          directory = "./dist"
+
+          [vars]
+          APP_NAME = "智能挪车"
+          EOF
+
+          echo "📄 生成的 wrangler.toml:"
+          cat wrangler.toml
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Output Deploy Info
+        run: |
+          echo "🎉 部署成功!"
+          echo ""
+          echo "📋 配置信息:"
+          echo "   KV Namespace ID: ${{ steps.kv.outputs.kv_id }}"
+          echo ""
+          echo "💡 如果这是首次部署，请将 KV ID 保存到 Repository Secrets:"
+          echo "   Settings → Secrets and variables → Actions → New repository secret"
+          echo "   名称: CLOUDFLARE_KV_ID"
+          echo "   值: ${{ steps.kv.outputs.kv_id }}"

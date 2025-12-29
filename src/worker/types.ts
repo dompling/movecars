@@ -40,6 +40,7 @@ export interface Owner {
   id: string;
   name: string;
   carPlate?: string;
+  defaultReply?: string; // 默认回复语
   pushChannel: PushChannel;
   pushConfig: PushConfig;
   adminToken: string;
@@ -90,6 +91,7 @@ export interface ApiResponse<T = unknown> {
 export interface CreateOwnerRequest {
   name: string;
   carPlate?: string;
+  defaultReply?: string;
   pushChannel: PushChannel;
   pushConfig: PushConfig;
 }
@@ -98,6 +100,7 @@ export interface CreateOwnerRequest {
 export interface UpdateOwnerRequest {
   name?: string;
   carPlate?: string;
+  defaultReply?: string;
   pushChannel?: PushChannel;
   pushConfig?: PushConfig;
 }

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Car, MapPin, Check, Navigation, Loader2, Clock } from 'lucide-react';
-import { Button, Card, Toast } from '@/components/ui';
-import { useLocation, useToast, openInMaps } from '@/hooks';
+import { Car, MapPin, Check, Navigation, Loader2, Clock, Map } from 'lucide-react';
+import { Button, Card, Toast, Modal } from '@/components/ui';
+import { useLocation, useToast, openAmap, openAppleMaps } from '@/hooks';
 import { requestApi, type RequestStatus } from '@/utils/api';
 
 export const Response: React.FC = () => {
@@ -14,6 +14,7 @@ export const Response: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
 
   // 加载请求信息
   useEffect(() => {
@@ -57,9 +58,17 @@ export const Response: React.FC = () => {
     setConfirming(false);
   };
 
-  const handleOpenRequesterMap = () => {
+  const handleOpenAmap = () => {
     if (data?.requesterLocation) {
-      openInMaps(data.requesterLocation.lat, data.requesterLocation.lng);
+      openAmap(data.requesterLocation.lat, data.requesterLocation.lng);
+      setShowMapModal(false);
+    }
+  };
+
+  const handleOpenApple = () => {
+    if (data?.requesterLocation) {
+      openAppleMaps(data.requesterLocation.lat, data.requesterLocation.lng);
+      setShowMapModal(false);
     }
   };
 
@@ -142,7 +151,7 @@ export const Response: React.FC = () => {
             <Button
               fullWidth
               variant="secondary"
-              onClick={handleOpenRequesterMap}
+              onClick={() => setShowMapModal(true)}
               icon={<Navigation size={18} />}
             >
               在地图中查看
@@ -206,6 +215,32 @@ export const Response: React.FC = () => {
           </Card>
         )}
       </div>
+
+      {/* Map Selection Modal */}
+      <Modal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        title="选择地图"
+      >
+        <div className="space-y-3">
+          <Button
+            fullWidth
+            variant="secondary"
+            onClick={handleOpenAmap}
+            icon={<Map size={18} />}
+          >
+            高德地图
+          </Button>
+          <Button
+            fullWidth
+            variant="secondary"
+            onClick={handleOpenApple}
+            icon={<Navigation size={18} />}
+          >
+            Apple 地图
+          </Button>
+        </div>
+      </Modal>
 
       <Toast {...toast} />
     </div>

@@ -46,37 +46,7 @@ cd movecars
 npm install
 ```
 
-### 2. 创建 Cloudflare KV 命名空间
-
-```bash
-# 登录 Cloudflare
-npx wrangler login
-
-# 创建 KV 命名空间
-npx wrangler kv:namespace create "MOVECARS_KV"
-```
-
-执行后会输出类似：
-
-```
-🌀 Creating namespace with title "movecars-MOVECARS_KV"
-✨ Success!
-Add the following to your configuration file in your kv_namespaces array:
-{ binding = "MOVECARS_KV", id = "xxxxxxxxxxxxxxxxxxxx" }
-```
-
-### 3. 配置 wrangler.toml
-
-编辑 `wrangler.toml`，将 KV 命名空间 ID 填入：
-
-```toml
-[[kv_namespaces]]
-binding = "MOVECARS_KV"
-id = "你的KV命名空间ID"        # 生产环境
-preview_id = "你的预览KV ID"   # 可选，开发环境
-```
-
-### 4. 本地开发
+### 2. 本地开发
 
 ```bash
 # 同时启动前端和 Worker 开发服务器
@@ -85,13 +55,24 @@ npm run dev
 
 访问 http://localhost:5173
 
-> 注意：`npm run dev` 会同时启动前端 (5173) 和 Worker (8787)，API 请求会自动代理到 Worker。
+> **本地开发说明：**
+> - 使用 `--local` 模式运行 Worker，KV 数据存储在本地 `.wrangler` 目录
+> - 无需配置真实的 KV namespace ID
+> - API 请求自动代理到 Worker (8787 端口)
 
 ### 5. 部署到 Cloudflare
+
+**方式一：通过 GitHub Actions（推荐）**
+
+推送代码到 `main` 分支即可自动部署，Actions 会自动创建/获取 KV namespace。
+
+**方式二：手动部署**
 
 ```bash
 npm run deploy
 ```
+
+> 首次部署会自动创建 KV namespace
 
 部署成功后会显示访问地址，如 `https://movecars.your-subdomain.workers.dev`
 
