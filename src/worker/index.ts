@@ -46,6 +46,39 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// 地域限制提示页面
+const BLOCKED_HTML = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>访问受限</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f5f5f7;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+    h1 { color: #1d1d1f; font-size: 24px; margin-bottom: 12px; }
+    p { color: #86868b; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>访问受限</h1>
+    <p>本服务仅限中国大陆地区访问</p>
+  </div>
+</body>
+</html>`;
+
 // 创建路由器
 const apiRouter = new Router();
 
@@ -79,6 +112,17 @@ apiRouter.get('/api/user/owners', handleGetUserOwners);
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // 地域限制：仅允许中国大陆访问
+    // CF-IPCountry 是 Cloudflare 自动添加的请求头
+    const country = request.headers.get('CF-IPCountry');
+    // 本地开发时没有这个头，或者在中国大陆（CN）时放行
+    if (country && country !== 'CN') {
+      return new Response(BLOCKED_HTML, {
+        status: 403,
+        headers: { 'Content-Type': 'text/html;charset=UTF-8' },
+      });
+    }
 
     // 处理 CORS 预检请求
     if (request.method === 'OPTIONS') {
