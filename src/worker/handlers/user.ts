@@ -81,7 +81,7 @@ export async function handleRegister(ctx: RouteContext): Promise<Response> {
 
     // 自动登录，创建会话
     const token = generateSessionToken();
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 天后过期
+    const expiresAt = Date.now() + 100 * 365 * 24 * 60 * 60 * 1000; // 永久有效（100年）
 
     await createSession(ctx.env.MOVECARS_KV, {
       userId: user.id,
@@ -133,7 +133,7 @@ export async function handleLogin(ctx: RouteContext): Promise<Response> {
 
     // 创建会话
     const token = generateSessionToken();
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 天后过期
+    const expiresAt = Date.now() + 100 * 365 * 24 * 60 * 60 * 1000; // 永久有效（100年）
 
     await createSession(ctx.env.MOVECARS_KV, {
       userId: user.id,

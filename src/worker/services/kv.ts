@@ -182,9 +182,8 @@ export async function phoneExists(kv: KVNamespace, phone: string): Promise<boole
  * 创建用户会话
  */
 export async function createSession(kv: KVNamespace, session: UserSession): Promise<void> {
-  // 会话有效期 7 天
-  const expirationTtl = 60 * 60 * 24 * 7;
-  await kv.put(`${SESSION_PREFIX}${session.token}`, JSON.stringify(session), { expirationTtl });
+  // 会话永久有效，不设置过期时间
+  await kv.put(`${SESSION_PREFIX}${session.token}`, JSON.stringify(session));
 }
 
 /**
@@ -193,13 +192,7 @@ export async function createSession(kv: KVNamespace, session: UserSession): Prom
 export async function getSession(kv: KVNamespace, token: string): Promise<UserSession | null> {
   const data = await kv.get(`${SESSION_PREFIX}${token}`);
   if (!data) return null;
-  const session = JSON.parse(data) as UserSession;
-  // 检查是否过期
-  if (session.expiresAt < Date.now()) {
-    await kv.delete(`${SESSION_PREFIX}${token}`);
-    return null;
-  }
-  return session;
+  return JSON.parse(data) as UserSession;
 }
 
 /**
