@@ -91,18 +91,21 @@ npm run deploy
 
 1. 在 GitHub 仓库中进入 **Settings** → **Secrets and variables** → **Actions**
 
-2. 添加以下 Secrets：
+ 添加以下 Secrets：
 
    | Secret 名称 | 说明 | 获取方式 |
    |------------|------|---------|
    | `CLOUDFLARE_API_TOKEN` | Cloudflare API Token | [创建 Token](https://dash.cloudflare.com/profile/api-tokens)，选择 "Edit Cloudflare Workers" 模板 |
    | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 账户 ID | 在 Workers 页面右侧栏可以找到 |
+   | `CLOUDFLARE_KV_ID` | Cloudflare 账户 ID | 在 Workers KV 页面右侧栏可以找到 |
 
 3. 推送代码后会自动触发部署
 
 ### 手动触发部署
 
 在 GitHub 仓库的 **Actions** 页面，选择 "Deploy to Cloudflare Workers" workflow，点击 "Run workflow"。
+
+**CLOUDFLARE_KV_ID** 可以自动创建，注意第一次部署的时候，Action 日志里面有 CLOUDFLARE_KV_ID，只需要添加到 Secrets 即可
 
 ## 推送渠道配置
 
