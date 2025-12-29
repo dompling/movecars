@@ -35,6 +35,69 @@ jobs:
       - name: Setup Wrangler
         run: npm install -g wrangler
 
+      - name: Verify Cloudflare Credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🔐 验证 Cloudflare 凭证..."
+
+          # 检查 secrets 是否设置
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "❌ CLOUDFLARE_API_TOKEN 未设置"
+            echo "请在 Repository Settings → Secrets and variables → Actions 中添加"
+            exit 1
+          fi
+          echo "✅ CLOUDFLARE_API_TOKEN 已设置"
+
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "❌ CLOUDFLARE_ACCOUNT_ID 未设置"
+            echo "请在 Repository Settings → Secrets and variables → Actions 中添加"
+            exit 1
+          fi
+          echo "✅ CLOUDFLARE_ACCOUNT_ID 已设置"
+
+          # 验证 API Token 是否有效
+          echo "🔍 验证 API Token 有效性..."
+          VERIFY_RESULT=$(curl -s -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json")
+
+          if echo "$VERIFY_RESULT" | grep -q '"success":true'; then
+            echo "✅ API Token 有效"
+            # 显示 token 状态
+            STATUS=$(echo "$VERIFY_RESULT" | jq -r '.result.status // "unknown"')
+            echo "   Token 状态: $STATUS"
+          else
+            echo "❌ API Token 无效或已过期"
+            echo "错误详情: $(echo "$VERIFY_RESULT" | jq -r '.errors[0].message // "未知错误"')"
+            echo ""
+            echo "请检查:"
+            echo "  1. Token 是否正确复制（无多余空格）"
+            echo "  2. Token 是否有 Workers 相关权限"
+            echo "  3. Token 是否已过期"
+            exit 1
+          fi
+
+          # 验证 Account ID
+          echo "🔍 验证 Account ID..."
+          ACCOUNT_RESULT=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json")
+
+          if echo "$ACCOUNT_RESULT" | grep -q '"success":true'; then
+            ACCOUNT_NAME=$(echo "$ACCOUNT_RESULT" | jq -r '.result.name // "未知"')
+            echo "✅ Account ID 有效"
+            echo "   账户名称: $ACCOUNT_NAME"
+          else
+            echo "❌ Account ID 无效或无权限访问"
+            echo "错误详情: $(echo "$ACCOUNT_RESULT" | jq -r '.errors[0].message // "未知错误"')"
+            exit 1
+          fi
+
+          echo ""
+          echo "🎉 所有凭证验证通过！"
+
       - name: Get or Create KV Namespace
         id: kv
         env:
