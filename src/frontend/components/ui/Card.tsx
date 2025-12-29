@@ -3,6 +3,7 @@ import React from 'react';
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   glass?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   onClick?: () => void;
@@ -11,6 +12,7 @@ interface CardProps {
 export const Card: React.FC<CardProps> = ({
   children,
   className = '',
+  style,
   glass = true,
   padding = 'md',
   onClick,
@@ -31,6 +33,7 @@ export const Card: React.FC<CardProps> = ({
         ${onClick ? 'cursor-pointer ios-press' : ''}
         ${className}
       `}
+      style={style}
       onClick={onClick}
     >
       {children}

@@ -1,25 +1,17 @@
 /**
  * 车主相关 API 处理器
  */
-import type {
-  Env,
-  ApiResponse,
-  Owner,
-  OwnerPublic,
-  CreateOwnerRequest,
-  UpdateOwnerRequest,
-  RouteContext
-} from '../types';
+import type {ApiResponse, CreateOwnerRequest, Owner, OwnerPublic, RouteContext, UpdateOwnerRequest} from '../types';
 import {
   createOwner,
-  getOwner,
-  updateOwner,
   deleteOwner,
-  ownerExists,
+  generateAdminToken,
   generateId,
-  generateAdminToken
+  getOwner,
+  ownerExists,
+  updateOwner
 } from '../services/kv';
-import { testNotification } from '../services/notification';
+import {testNotification} from '../services/notification';
 
 /**
  * JSON 响应工具函数

@@ -1,7 +1,7 @@
 /**
  * KV 存储服务
  */
-import type { Owner, MoveRequest, Env } from './types';
+import type {MoveRequest, Owner} from '../types';
 
 const OWNER_PREFIX = 'owner:';
 const REQUEST_PREFIX = 'request:';

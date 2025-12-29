@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Car, ArrowRight, Bell, Shield, Zap } from 'lucide-react';
-import { Button, Card, Input, Select, Toast } from '../components/ui';
-import { useToast } from '../hooks';
-import { ownerApi, type CreateOwnerData } from '../utils/api';
+import { Button, Card, Input, Select, Toast } from '@/components/ui';
+import { useToast } from '@/hooks';
+import { ownerApi, type CreateOwnerData } from '@/utils/api';
 
 type PushChannel = 'bark' | 'pushplus' | 'serverchan' | 'telegram';
 

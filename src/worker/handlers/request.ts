@@ -2,22 +2,15 @@
  * 挪车请求 API 处理器
  */
 import type {
-  Env,
   ApiResponse,
-  MoveRequest,
-  CreateMoveRequestBody,
   ConfirmMoveRequestBody,
-  RouteContext,
-  Owner
+  CreateMoveRequestBody,
+  MoveRequest,
+  Owner,
+  RouteContext
 } from '../types';
-import {
-  createRequest,
-  getRequest,
-  updateRequest,
-  getOwner,
-  generateId
-} from '../services/kv';
-import { sendNotification } from '../services/notification';
+import {createRequest, generateId, getOwner, getRequest, updateRequest} from '../services/kv';
+import {sendNotification} from '../services/notification';
 
 /**
  * JSON 响应工具函数

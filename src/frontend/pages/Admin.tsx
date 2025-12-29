@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Settings, QrCode, Bell, Trash2, Copy, Check, ExternalLink } from 'lucide-react';
-import { Button, Card, CardHeader, Input, Select, Toast, Modal } from '../components/ui';
-import { useToast } from '../hooks';
-import { ownerApi, type CreateOwnerData, type OwnerFull } from '../utils/api';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
+import {Bell, Check, Copy, ExternalLink, QrCode, Settings, Trash2} from 'lucide-react';
+import {Button, Card, CardHeader, Input, Modal, Select, Toast} from '@/components/ui';
+import {useToast} from '@/hooks';
+import {type CreateOwnerData, ownerApi, type OwnerFull} from '@/utils/api';
 
 type PushChannel = 'bark' | 'pushplus' | 'serverchan' | 'telegram';
 

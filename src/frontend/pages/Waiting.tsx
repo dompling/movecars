@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
-import { Button, Card, Toast } from '../components/ui';
-import { usePolling, useToast, openInMaps } from '../hooks';
-import { requestApi, type RequestStatus } from '../utils/api';
+import { Button, Card, Toast } from '@/components/ui';
+import { usePolling, useToast, openInMaps } from '@/hooks';
+import { requestApi, type RequestStatus } from '@/utils/api';
 
 export const Waiting: React.FC = () => {
   const { id } = useParams<{ id: string }>();

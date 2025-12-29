@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Car, MapPin, Check, Navigation, Loader2, Clock } from 'lucide-react';
-import { Button, Card, Toast } from '../components/ui';
-import { useLocation, useToast, openInMaps } from '../hooks';
-import { requestApi, type RequestStatus } from '../utils/api';
+import { Button, Card, Toast } from '@/components/ui';
+import { useLocation, useToast, openInMaps } from '@/hooks';
+import { requestApi, type RequestStatus } from '@/utils/api';
 
 export const Response: React.FC = () => {
   const { id } = useParams<{ id: string }>();
