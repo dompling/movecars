@@ -57,8 +57,8 @@ jobs:
 
           echo "🔍 查找现有 KV namespace..."
 
-          # 获取 KV 列表
-          KV_LIST=$(wrangler kv:namespace list 2>/dev/null || echo "[]")
+          # 获取 KV 列表（使用 --json 参数）
+          KV_LIST=$(wrangler kv namespace list --json 2>/dev/null || echo "[]")
 
           # 查找 movecars 相关的 namespace
           KV_ID=$(echo "$KV_LIST" | jq -r '.[] | select(.title | contains("movecars")) | .id' | head -1)
