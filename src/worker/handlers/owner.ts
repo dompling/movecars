@@ -3,12 +3,15 @@
  */
 import type {ApiResponse, CreateOwnerRequest, Owner, OwnerPublic, RouteContext, UpdateOwnerRequest} from '../types';
 import {
+  addOwnerToUser,
   createOwner,
   deleteOwner,
   generateAdminToken,
   generateId,
   getOwner,
+  getSession,
   ownerExists,
+  removeOwnerFromUser,
   updateOwner
 } from '../services/kv';
 import {testNotification} from '../services/notification';
@@ -51,6 +54,17 @@ export async function handleCreateOwner(ctx: RouteContext): Promise<Response> {
       return jsonResponse({ success: false, error: '请填写 Telegram 配置' }, 400);
     }
 
+    // 检查是否有登录用户
+    let userId: string | undefined;
+    const authHeader = ctx.request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (token) {
+      const session = await getSession(ctx.env.MOVECARS_KV, token);
+      if (session) {
+        userId = session.userId;
+      }
+    }
+
     // 生成唯一 ID
     let ownerId = generateId(6);
     while (await ownerExists(ctx.env.MOVECARS_KV, ownerId)) {
@@ -59,6 +73,7 @@ export async function handleCreateOwner(ctx: RouteContext): Promise<Response> {
 
     const owner: Owner = {
       id: ownerId,
+      userId, // 关联用户 ID
       name: body.name,
       carPlate: body.carPlate,
       defaultReply: body.defaultReply,
@@ -69,6 +84,11 @@ export async function handleCreateOwner(ctx: RouteContext): Promise<Response> {
     };
 
     await createOwner(ctx.env.MOVECARS_KV, owner);
+
+    // 如果有登录用户，将车主添加到用户的车主列表
+    if (userId) {
+      await addOwnerToUser(ctx.env.MOVECARS_KV, userId, ownerId);
+    }
 
     return jsonResponse({
       success: true,
@@ -200,6 +220,11 @@ export async function handleDeleteOwner(ctx: RouteContext): Promise<Response> {
 
   if (owner.adminToken !== token) {
     return jsonResponse({ success: false, error: '认证失败' }, 403);
+  }
+
+  // 如果车主关联了用户，从用户列表中移除
+  if (owner.userId) {
+    await removeOwnerFromUser(ctx.env.MOVECARS_KV, owner.userId, id);
   }
 
   await deleteOwner(ctx.env.MOVECARS_KV, id);

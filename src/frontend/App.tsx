@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Home, Admin, Contact, Waiting, Response } from './pages';
+import { Home, Admin, Contact, Waiting, Response, Login, Register, Dashboard, PhoneAuth } from './pages';
 
 export const App: React.FC = () => {
   return (
@@ -8,6 +8,13 @@ export const App: React.FC = () => {
       <Routes>
         {/* 首页/车主注册 */}
         <Route path="/" element={<Home />} />
+
+        {/* 用户认证 */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* 用户中心 */}
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* 车主管理后台 */}
         <Route path="/admin/:id" element={<Admin />} />
@@ -20,6 +27,9 @@ export const App: React.FC = () => {
 
         {/* 车主确认页面 */}
         <Route path="/r/:id" element={<Response />} />
+
+        {/* 手机号授权页面 */}
+        <Route path="/auth/:id" element={<PhoneAuth />} />
 
         {/* 404 */}
         <Route path="*" element={

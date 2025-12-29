@@ -4,6 +4,26 @@
 
 const API_BASE = '/api';
 
+// 获取存储的 token
+function getToken(): string | null {
+  return localStorage.getItem('auth_token');
+}
+
+// 设置 token
+export function setToken(token: string): void {
+  localStorage.setItem('auth_token', token);
+}
+
+// 清除 token
+export function clearToken(): void {
+  localStorage.removeItem('auth_token');
+}
+
+// 检查是否已登录
+export function isLoggedIn(): boolean {
+  return !!getToken();
+}
+
 interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -16,12 +36,20 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
+    const token = getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers as Record<string, string>,
+    };
+
+    // 如果有 token，添加到 Authorization header
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     const data = await response.json();
@@ -157,4 +185,84 @@ export const requestApi = {
     request(`/request/${id}/complete`, {
       method: 'PUT',
     }),
+
+  // 手机号授权相关
+  requestPhone: (id: string) =>
+    request<{ phoneAuthorized?: boolean }>(`/request/${id}/request-phone`, {
+      method: 'POST',
+    }),
+
+  authorizePhone: (id: string, authorize: boolean) =>
+    request<{ phoneAuthorized: boolean; authorizedPhone?: string }>(`/request/${id}/authorize-phone`, {
+      method: 'PUT',
+      body: JSON.stringify({ authorize }),
+    }),
+
+  getPhoneStatus: (id: string) =>
+    request<PhoneStatus>(`/request/${id}/phone-status`),
+};
+
+// 手机号授权状态
+export interface PhoneStatus {
+  hasLinkedAccount: boolean;
+  phoneRequested: boolean;
+  phoneAuthorized?: boolean;
+  authorizedPhone?: string;
+}
+
+// ========== 用户认证 API ==========
+
+export interface LoginData {
+  phone: string;
+  password: string;
+}
+
+export interface RegisterData {
+  phone: string;
+  password: string;
+}
+
+export interface UserInfo {
+  id: string;
+  phone: string;
+  createdAt?: number;
+}
+
+export interface LoginResult {
+  user: UserInfo;
+  token: string;
+  expiresAt: number;
+}
+
+export interface UserOwner {
+  id: string;
+  name: string;
+  carPlate?: string;
+  adminToken: string;
+  createdAt: number;
+}
+
+export const userApi = {
+  register: (data: RegisterData) =>
+    request<LoginResult>('/user/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  login: (data: LoginData) =>
+    request<LoginResult>('/user/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  logout: () =>
+    request('/user/logout', {
+      method: 'POST',
+    }),
+
+  getCurrentUser: () =>
+    request<UserInfo>('/user/me'),
+
+  getMyOwners: () =>
+    request<UserOwner[]>('/user/owners'),
 };

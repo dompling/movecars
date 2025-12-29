@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useRequest } from 'ahooks';
-import { Clock, MapPin, Check, Navigation, Loader2, Map } from 'lucide-react';
+import { Clock, MapPin, Check, Navigation, Loader2, Map, Phone } from 'lucide-react';
 import { Button, Card, Toast, Modal } from '@/components/ui';
 import { useToast, openAmap, openAppleMaps } from '@/hooks';
 import { requestApi, type RequestStatus } from '@/utils/api';
@@ -10,7 +10,9 @@ export const Waiting: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { toast, showToast } = useToast();
   const [showMapModal, setShowMapModal] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
 
+  // 获取请求状态
   const { data, loading, cancel } = useRequest(
     async () => {
       if (!id) throw new Error('无效的请求');
@@ -27,6 +29,21 @@ export const Waiting: React.FC = () => {
           cancel();
         }
       },
+    }
+  );
+
+  // 获取手机号授权状态
+  const { data: phoneStatus, refresh: refreshPhoneStatus } = useRequest(
+    async () => {
+      if (!id) throw new Error('无效的请求');
+      const result = await requestApi.getPhoneStatus(id);
+      if (!result.success) throw new Error(result.error);
+      return result.data!;
+    },
+    {
+      pollingInterval: 5000, // 如果已请求但未授权，轮询检查
+      ready: !!id,
+      pollingWhenHidden: false,
     }
   );
 
@@ -86,6 +103,21 @@ export const Waiting: React.FC = () => {
     const result = await requestApi.complete(id);
     if (result.success) {
       showToast('感谢使用！', 'success');
+    }
+  };
+
+  // 请求获取车主手机号
+  const handleRequestPhone = async () => {
+    if (!id) return;
+    setPhoneLoading(true);
+    const result = await requestApi.requestPhone(id);
+    setPhoneLoading(false);
+
+    if (result.success) {
+      showToast(result.message || '已发送授权请求，请等待车主确认', 'success');
+      refreshPhoneStatus();
+    } else {
+      showToast(result.error || '请求失败', 'error');
     }
   };
 
@@ -150,6 +182,55 @@ export const Waiting: React.FC = () => {
             )}
           </div>
         </Card>
+
+        {/* Phone Authorization Card */}
+        {phoneStatus?.hasLinkedAccount && (
+          <Card className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                <Phone size={20} className="text-ios-blue" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-900">车主手机号</h3>
+                {phoneStatus.phoneAuthorized ? (
+                  <a
+                    href={`tel:${phoneStatus.authorizedPhone}`}
+                    className="text-lg font-bold text-ios-blue underline"
+                  >
+                    {phoneStatus.authorizedPhone}
+                  </a>
+                ) : phoneStatus.phoneRequested ? (
+                  <p className="text-sm text-ios-orange">等待车主授权中...</p>
+                ) : (
+                  <p className="text-sm text-ios-gray-1">点击下方按钮请求获取</p>
+                )}
+              </div>
+            </div>
+            {phoneStatus.phoneAuthorized ? (
+              <Button
+                fullWidth
+                onClick={() => window.location.href = `tel:${phoneStatus.authorizedPhone}`}
+                icon={<Phone size={18} />}
+              >
+                拨打电话
+              </Button>
+            ) : (
+              <Button
+                fullWidth
+                variant={phoneStatus.phoneRequested ? 'secondary' : 'primary'}
+                loading={phoneLoading}
+                disabled={phoneStatus.phoneRequested}
+                onClick={handleRequestPhone}
+                icon={<Phone size={18} />}
+              >
+                {phoneStatus.phoneRequested ? '等待授权中' : '请求获取手机号'}
+              </Button>
+            )}
+            {phoneStatus.phoneAuthorized === false && (
+              <p className="text-sm text-ios-red text-center mt-3">车主拒绝了授权请求</p>
+            )}
+          </Card>
+        )}
 
         {/* Owner Location */}
         {data.ownerLocation && (

@@ -35,9 +35,19 @@ export interface PushConfig {
   telegram?: TelegramConfig;
 }
 
+// 用户信息
+export interface User {
+  id: string;
+  phone: string;
+  passwordHash: string; // 密码哈希
+  createdAt: number;
+  updatedAt?: number;
+}
+
 // 车主信息
 export interface Owner {
   id: string;
+  userId?: string; // 关联的用户 ID
   name: string;
   carPlate?: string;
   defaultReply?: string; // 默认回复语
@@ -77,6 +87,10 @@ export interface MoveRequest {
   notifiedAt?: number;
   confirmedAt?: number;
   completedAt?: number;
+  // 手机号授权相关
+  phoneRequested?: boolean;      // 是否请求了手机号
+  phoneAuthorized?: boolean;     // 车主是否授权
+  authorizedPhone?: string;      // 授权后的手机号（脱敏显示）
 }
 
 // API 响应
@@ -129,4 +143,35 @@ export interface RouteContext {
   request: Request;
   env: Env;
   params: Record<string, string>;
+}
+
+// ========== 用户认证相关 ==========
+
+// 用户注册请求
+export interface RegisterRequest {
+  phone: string;
+  password: string;
+}
+
+// 用户登录请求
+export interface LoginRequest {
+  phone: string;
+  password: string;
+}
+
+// 用户会话
+export interface UserSession {
+  userId: string;
+  token: string;
+  expiresAt: number;
+}
+
+// 登录响应
+export interface LoginResponse {
+  user: {
+    id: string;
+    phone: string;
+  };
+  token: string;
+  expiresAt: number;
 }

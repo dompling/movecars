@@ -2,6 +2,7 @@
   "name": "movecars",
   "version": "1.0.0",
   "description": "智能挪车通知系统 - Cloudflare Workers",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:worker\"",

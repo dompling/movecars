@@ -9,7 +9,7 @@ import type {
   Owner,
   RouteContext
 } from '../types';
-import {createRequest, generateId, getOwner, getRequest, updateRequest} from '../services/kv';
+import {createRequest, generateId, getOwner, getRequest, getUser, updateRequest} from '../services/kv';
 import {sendNotification} from '../services/notification';
 
 /**
@@ -241,5 +241,139 @@ export async function handleCompleteRequest(ctx: RouteContext): Promise<Response
   return jsonResponse({
     success: true,
     message: '已完成',
+  });
+}
+
+/**
+ * 请求获取车主手机号
+ * POST /api/request/:id/request-phone
+ */
+export async function handleRequestPhone(ctx: RouteContext): Promise<Response> {
+  const { id } = ctx.params;
+
+  const request = await getRequest(ctx.env.MOVECARS_KV, id);
+  if (!request) {
+    return jsonResponse({ success: false, error: '请求不存在或已过期' }, 404);
+  }
+
+  // 检查是否已经请求过
+  if (request.phoneRequested) {
+    return jsonResponse({
+      success: true,
+      message: '已发送授权请求，请等待车主确认',
+      data: { phoneAuthorized: request.phoneAuthorized },
+    });
+  }
+
+  // 获取车主信息
+  const owner = await getOwner(ctx.env.MOVECARS_KV, request.ownerId);
+  if (!owner) {
+    return jsonResponse({ success: false, error: '车主不存在' }, 404);
+  }
+
+  // 检查车主是否关联了用户账号
+  if (!owner.userId) {
+    return jsonResponse({ success: false, error: '车主未绑定账号，无法获取手机号' }, 400);
+  }
+
+  // 标记已请求手机号
+  request.phoneRequested = true;
+  await updateRequest(ctx.env.MOVECARS_KV, request);
+
+  // 获取基础 URL
+  const url = new URL(ctx.request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+
+  // 发送授权请求通知给车主
+  await sendNotification(owner, {
+    title: '📱 有人请求获取您的手机号',
+    body: `有人请求挪车并希望获取您的手机号以便联系。\n\n点击链接进行授权或拒绝。`,
+    url: `${baseUrl}/auth/${request.id}`,
+  });
+
+  return jsonResponse({
+    success: true,
+    message: '已发送授权请求，请等待车主确认',
+  });
+}
+
+/**
+ * 车主授权或拒绝手机号请求
+ * PUT /api/request/:id/authorize-phone
+ */
+export async function handleAuthorizePhone(ctx: RouteContext): Promise<Response> {
+  const { id } = ctx.params;
+
+  const request = await getRequest(ctx.env.MOVECARS_KV, id);
+  if (!request) {
+    return jsonResponse({ success: false, error: '请求不存在或已过期' }, 404);
+  }
+
+  // 检查是否有手机号请求
+  if (!request.phoneRequested) {
+    return jsonResponse({ success: false, error: '没有手机号授权请求' }, 400);
+  }
+
+  try {
+    const body = await ctx.request.json() as { authorize: boolean };
+
+    if (body.authorize) {
+      // 获取车主信息
+      const owner = await getOwner(ctx.env.MOVECARS_KV, request.ownerId);
+      if (!owner || !owner.userId) {
+        return jsonResponse({ success: false, error: '车主账号不存在' }, 404);
+      }
+
+      // 获取用户信息
+      const user = await getUser(ctx.env.MOVECARS_KV, owner.userId);
+      if (!user) {
+        return jsonResponse({ success: false, error: '用户不存在' }, 404);
+      }
+
+      request.phoneAuthorized = true;
+      request.authorizedPhone = user.phone;
+    } else {
+      request.phoneAuthorized = false;
+    }
+
+    await updateRequest(ctx.env.MOVECARS_KV, request);
+
+    return jsonResponse({
+      success: true,
+      message: body.authorize ? '已授权，对方可以看到您的手机号了' : '已拒绝授权',
+      data: {
+        phoneAuthorized: request.phoneAuthorized,
+        authorizedPhone: request.authorizedPhone,
+      },
+    });
+  } catch (error) {
+    return jsonResponse({ success: false, error: '操作失败: ' + String(error) }, 500);
+  }
+}
+
+/**
+ * 获取手机号授权状态
+ * GET /api/request/:id/phone-status
+ */
+export async function handleGetPhoneStatus(ctx: RouteContext): Promise<Response> {
+  const { id } = ctx.params;
+
+  const request = await getRequest(ctx.env.MOVECARS_KV, id);
+  if (!request) {
+    return jsonResponse({ success: false, error: '请求不存在或已过期' }, 404);
+  }
+
+  // 检查车主是否关联了账号
+  const owner = await getOwner(ctx.env.MOVECARS_KV, request.ownerId);
+  const hasLinkedAccount = !!(owner?.userId);
+
+  return jsonResponse({
+    success: true,
+    data: {
+      hasLinkedAccount,
+      phoneRequested: request.phoneRequested || false,
+      phoneAuthorized: request.phoneAuthorized,
+      authorizedPhone: request.authorizedPhone,
+    },
   });
 }

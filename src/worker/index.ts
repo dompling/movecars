@@ -18,7 +18,17 @@ import {
   handleDelayedNotify,
   handleConfirmRequest,
   handleCompleteRequest,
+  handleRequestPhone,
+  handleAuthorizePhone,
+  handleGetPhoneStatus,
 } from './handlers/request';
+import {
+  handleRegister,
+  handleLogin,
+  handleLogout,
+  handleGetCurrentUser,
+  handleGetUserOwners,
+} from './handlers/user';
 
 // 内联前端 HTML（构建时会被替换）
 const HTML_TEMPLATE = `<!DOCTYPE html>
@@ -53,6 +63,18 @@ apiRouter.get('/api/request/:id', handleGetRequest);
 apiRouter.post('/api/request/:id/notify', handleDelayedNotify);
 apiRouter.put('/api/request/:id/confirm', handleConfirmRequest);
 apiRouter.put('/api/request/:id/complete', handleCompleteRequest);
+
+// 手机号授权相关 API
+apiRouter.post('/api/request/:id/request-phone', handleRequestPhone);
+apiRouter.put('/api/request/:id/authorize-phone', handleAuthorizePhone);
+apiRouter.get('/api/request/:id/phone-status', handleGetPhoneStatus);
+
+// 用户认证相关 API
+apiRouter.post('/api/user/register', handleRegister);
+apiRouter.post('/api/user/login', handleLogin);
+apiRouter.post('/api/user/logout', handleLogout);
+apiRouter.get('/api/user/me', handleGetCurrentUser);
+apiRouter.get('/api/user/owners', handleGetUserOwners);
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

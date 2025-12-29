@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Car, ArrowRight, Bell, Shield, Zap } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Car, ArrowRight, Bell, Shield, Zap, User } from 'lucide-react';
 import { Button, Card, Input, Select, Toast } from '@/components/ui';
 import { useToast } from '@/hooks';
-import { ownerApi, type CreateOwnerData } from '@/utils/api';
+import { ownerApi, isLoggedIn, type CreateOwnerData } from '@/utils/api';
 
 type PushChannel = 'bark' | 'pushplus' | 'serverchan' | 'telegram';
 
@@ -95,6 +95,27 @@ export const Home: React.FC = () => {
     return (
       <div className="min-h-screen bg-ios-bg safe-area-top safe-area-bottom">
         <div className="px-6 py-12 max-w-md mx-auto">
+          {/* 顶部登录入口 */}
+          <div className="flex justify-end mb-4">
+            {isLoggedIn() ? (
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-1 text-ios-blue font-medium"
+              >
+                <User size={18} />
+                我的挪车码
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1 text-ios-blue font-medium"
+              >
+                <User size={18} />
+                登录
+              </Link>
+            )}
+          </div>
+
           {/* Hero */}
           <div className="text-center mb-12 animate-fade-in">
             <div className="w-20 h-20 bg-ios-blue rounded-3xl flex items-center justify-center mx-auto mb-6 ios-shadow-lg">

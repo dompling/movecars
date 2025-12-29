@@ -3,3 +3,7 @@ export { Admin } from './Admin';
 export { Contact } from './Contact';
 export { Waiting } from './Waiting';
 export { Response } from './Response';
+export { Login } from './Login';
+export { Register } from './Register';
+export { Dashboard } from './Dashboard';
+export { PhoneAuth } from './PhoneAuth';
