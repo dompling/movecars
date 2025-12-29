@@ -58,10 +58,20 @@ jobs:
           echo "🔍 查找现有 KV namespace..."
 
           # 获取 KV 列表（使用 --json 参数）
-          KV_LIST=$(wrangler kv namespace list --json 2>/dev/null || echo "[]")
+          KV_LIST=$(wrangler kv namespace list --json 2>&1 || echo "[]")
+
+          # 验证是否为有效 JSON，如果不是则使用空数组
+          if ! echo "$KV_LIST" | jq empty 2>/dev/null; then
+            echo "⚠️ KV 列表不是有效 JSON，尝试提取 JSON 部分..."
+            KV_LIST=$(echo "$KV_LIST" | grep -E '^\[' || echo "[]")
+            if ! echo "$KV_LIST" | jq empty 2>/dev/null; then
+              echo "⚠️ 无法解析 KV 列表，使用空数组"
+              KV_LIST="[]"
+            fi
+          fi
 
           # 查找 movecars 相关的 namespace
-          KV_ID=$(echo "$KV_LIST" | jq -r '.[] | select(.title | contains("movecars")) | .id' | head -1)
+          KV_ID=$(echo "$KV_LIST" | jq -r '.[] | select(.title | contains("movecars")) | .id' | head -1 || echo "")
 
           if [ -n "$KV_ID" ] && [ "$KV_ID" != "null" ]; then
             echo "✅ 找到现有 KV namespace: $KV_ID"
